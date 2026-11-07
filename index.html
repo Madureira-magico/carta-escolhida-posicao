@@ -183,9 +183,10 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
       <div class="box">
         <div class="row">Enviar<select id="sNtfyOn"><option value="0">Desligado</option><option value="1">Ligado</option></select></div>
         <div class="row">Canal<input id="sNtfyTopic" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="nome-do-canal" style="flex:1;min-width:0;text-align:right;border:0;font-size:16px;color:#0a7aff;outline:none;background:transparent"></div>
+        <div class="row" style="display:block"><div style="font-size:14px;color:#6d6d72;margin-bottom:6px">Mensagem</div><textarea id="sNtfyMsg" rows="3" style="width:100%;border:0;font-size:16px;font-family:inherit;resize:vertical;outline:none" placeholder="{carta}"></textarea></div>
         <div class="row"><button class="btn" id="bNtfyTest">Enviar teste</button><span id="ntfySt" style="color:#8e8e93;font-size:14px"></span></div>
       </div>
-      <div class="note">Com "Ligado", ao digitar a carta a resposta também é enviada, escondida, para o canal do ntfy. Quem recebe instala o app gratuito <b>ntfy</b>, toca em <b>+</b> e assina o mesmo nome de canal. Use um nome difícil de adivinhar. Precisa de internet no momento do envio.</div>
+      <div class="note">Com "Ligado", ao digitar a carta a resposta também é enviada, escondida, para o canal do ntfy. Na <b>Mensagem</b>, escreva o texto que quiser e coloque <b>{carta}</b> onde a resposta deve entrar. Ex.: <i>Olá, se alguém te ligar diga: "A carta escolhida foi {carta}"</i> → chega <i>…foi o Rei de Copas"</i>. Se não colocar {carta}, a resposta vai no final. Quem recebe instala o app gratuito <b>ntfy</b>, toca em <b>+</b> e assina o mesmo nome de canal. Use um nome difícil de adivinhar. Precisa de internet no momento do envio.</div>
     </div>
 
     <div class="sec">
@@ -285,7 +286,7 @@ const SUITS={C:{n:'Paus',red:false},H:{n:'Copas',red:true},S:{n:'Espadas',red:fa
 const RANKS={1:'Ás',11:'Valete',12:'Dama',13:'Rei'};
 const MN_DEF=[[4,'C'],[2,'H'],[7,'D'],[3,'C'],[4,'H'],[6,'D'],[1,'S'],[5,'H'],[9,'S'],[2,'S'],[12,'H'],[3,'D'],[12,'C'],[8,'H'],[6,'S'],[5,'S'],[9,'H'],[13,'C'],[2,'D'],[11,'H'],[3,'S'],[8,'S'],[6,'H'],[10,'C'],[5,'D'],[13,'D'],
  [2,'C'],[3,'H'],[8,'D'],[5,'C'],[13,'S'],[11,'D'],[8,'C'],[10,'S'],[13,'H'],[11,'C'],[7,'S'],[10,'H'],[1,'D'],[4,'S'],[7,'H'],[4,'D'],[1,'C'],[9,'C'],[11,'S'],[12,'D'],[7,'C'],[12,'S'],[10,'D'],[6,'C'],[1,'H'],[9,'D']];
-let cfg=Object.assign({ntfy:{on:0,topic:''},qpos:null,ans:{on:1,color:'#ffffff',size:11,x:.5,y:.5,set:false},exit:null,opt:1,fmt:'word',acc:'keep',suits:['S','H','C','D'],len:4,hint:'.25',table:MN_DEF},store.get('cfg',{}));
+let cfg=Object.assign({ntfy:{on:0,topic:'',msg:'{carta}'},qpos:null,ans:{on:1,color:'#ffffff',size:11,x:.5,y:.5,set:false},exit:null,opt:1,fmt:'word',acc:'keep',suits:['S','H','C','D'],len:4,hint:'.25',table:MN_DEF},store.get('cfg',{}));
 let wall=store.get('wall',null), homeShot=store.get('homeShot',null);
 function saveCfg(){store.set('cfg',cfg);}
 cfg.opt=1; /* sempre abre na opção 1 */
@@ -391,12 +392,14 @@ function check(){const e=decode(code);
     setTimeout(()=>{code='';drawDots();busy=false;d.classList.remove('shake');},480);}}
 
 /* ---------- ntfy: envio escondido para outro celular ---------- */
+function ntfyText(ans){let m=((cfg.ntfy||{}).msg||'').trim();if(!m)return ans;
+  return /\{carta\}/i.test(m)?m.replace(/\{carta\}/gi,ans):m+' '+ans;}
 function ntfySend(text,test){const n=cfg.ntfy||{};const topic=(n.topic||'').trim();
   if(!topic||!text)return Promise.resolve(false);
   return fetch('https://ntfy.sh/'+encodeURIComponent(topic),{method:'POST',body:text,keepalive:true})
     .then(r=>r.ok).catch(()=>false);}
 function success(){
-  if(+(cfg.ntfy||{}).on&&lastCode){const t=answerText(lastCode);if(t)ntfySend(t);}
+  if(+(cfg.ntfy||{}).on&&lastCode){const t=answerText(lastCode);if(t)ntfySend(ntfyText(t));}
   drawAns();
   show('home');
   anim($('#home'),[{transform:'scale(1.12)',opacity:0},{transform:'scale(1)',opacity:1}],420);
@@ -468,8 +471,8 @@ document.addEventListener('click',e=>{if(eatClick){e.stopPropagation();e.prevent
 
 /* ---------- settings ---------- */
 function openSettings(){fillSettings();show('settings');anim($('#settings'),[{transform:'translateY(100%)'},{transform:'translateY(0)'}],320);}
-function fillSettings(){$('#sVer').textContent='Versão 13 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
-  cfg.ntfy=cfg.ntfy||{on:0,topic:''};$('#sNtfyOn').value=String(+cfg.ntfy.on);if(document.activeElement!==$('#sNtfyTopic'))$('#sNtfyTopic').value=cfg.ntfy.topic||'';
+function fillSettings(){$('#sVer').textContent='Versão 14 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
+  cfg.ntfy=cfg.ntfy||{on:0,topic:''};if(cfg.ntfy.msg==null)cfg.ntfy.msg='{carta}';if(document.activeElement!==$('#sNtfyMsg'))$('#sNtfyMsg').value=cfg.ntfy.msg;$('#sNtfyOn').value=String(+cfg.ntfy.on);if(document.activeElement!==$('#sNtfyTopic'))$('#sNtfyTopic').value=cfg.ntfy.topic||'';
   $('#sOpt').value=String(cfg.opt);$('#sAnsOn').value=String(+cfg.ans.on);$('#sAnsColor').value=cfg.ans.color;$('#sAnsSize').value=String(cfg.ans.size);
   $('#ansPosSt').textContent=cfg.ans.set?'definido ✓':'centro da tela';$('#exitPosSt').textContent=cfg.exit?'definido ✓':'não definido';$('#qPosSt').textContent=cfg.qpos?'definido ✓':'lanterna (padrão)';$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
   if(document.activeElement!==$('#sTable'))$('#sTable').value=(cfg.table||[]).map(c=>cardName2(c[0],c[1])).join('\n');tableState();
@@ -479,10 +482,11 @@ function fillSettings(){$('#sVer').textContent='Versão 13 · tela '+screen.heig
 $('#sLen').onchange=e=>{cfg.len=+e.target.value;saveCfg();fillSettings();};
 $('#sNtfyOn').onchange=e=>{cfg.ntfy.on=+e.target.value;
   if(cfg.ntfy.on&&!cfg.ntfy.topic){cfg.ntfy.topic='nipes-'+Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,6);$('#sNtfyTopic').value=cfg.ntfy.topic;}saveCfg();};
+$('#sNtfyMsg').oninput=e=>{cfg.ntfy.msg=e.target.value;saveCfg();};
 $('#sNtfyTopic').oninput=e=>{cfg.ntfy.topic=e.target.value.trim().replace(/[^A-Za-z0-9_-]/g,'');saveCfg();};
 $('#sNtfyTopic').onblur=e=>{e.target.value=cfg.ntfy.topic;};
 $('#bNtfyTest').onclick=()=>{const st=$('#ntfySt');if(!cfg.ntfy.topic){st.textContent='Escreva o nome do canal';return;}
-  st.textContent='Enviando…';ntfySend('Teste do Nipes ✓',true).then(ok=>{st.textContent=ok?'Enviado ✓':'Não enviou (sem internet?)';});};
+  st.textContent='Enviando…';ntfySend('Teste do Nipes ✓ '+ntfyText('o Rei de Copas'),true).then(ok=>{st.textContent=ok?'Enviado ✓':'Não enviou (sem internet?)';});};
 $('#sOpt').onchange=e=>{cfg.opt=+e.target.value;};
 $('#sFmt').onchange=e=>{cfg.fmt=e.target.value;saveCfg();fillSettings();};
 $('#sAcc').onchange=e=>{cfg.acc=e.target.value;saveCfg();};
