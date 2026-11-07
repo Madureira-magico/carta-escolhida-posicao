@@ -454,7 +454,7 @@ document.addEventListener('click',e=>{if(eatClick){e.stopPropagation();e.prevent
 
 /* ---------- settings ---------- */
 function openSettings(){fillSettings();show('settings');anim($('#settings'),[{transform:'translateY(100%)'},{transform:'translateY(0)'}],320);}
-function fillSettings(){$('#sVer').textContent='Versão 7 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
+function fillSettings(){$('#sVer').textContent='Versão 8 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
   $('#sOpt').value=String(cfg.opt);$('#sAnsOn').value=String(+cfg.ans.on);$('#sAnsColor').value=cfg.ans.color;$('#sAnsSize').value=String(cfg.ans.size);
   $('#ansPosSt').textContent=cfg.ans.set?'definido ✓':'centro da tela';$('#exitPosSt').textContent=cfg.exit?'definido ✓':'não definido';$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
   if(document.activeElement!==$('#sTable'))$('#sTable').value=(cfg.table||[]).map(c=>cardName2(c[0],c[1])).join('\n');tableState();
@@ -507,14 +507,17 @@ function placePreview(){
   else{const m=$('#placeMark');m.style.display='block';m.style.left=(pp.x*innerWidth)+'px';m.style.top=(pp.y*innerHeight)+'px';}}
 function startPlace(what){placeWhat=what;hide('settings');show('home');$('#placeMark').style.display='none';
   pp=what==='ans'?{x:cfg.ans.x,y:cfg.ans.y}:(cfg.exit?{x:cfg.exit.x,y:cfg.exit.y}:{x:.5,y:.5});
-  $('#placeMsg').textContent=what==='ans'?'Arraste o dedo em qualquer lugar para mover a resposta':'Arraste o círculo até o ícone de saída';
-  placePreview();show('place');}
+  $('#placeMsg').textContent=what==='ans'?'Arraste o dedo em qualquer lugar para mover a resposta':'Toque no ícone que vai servir de saída';
+  $('#place .pbar').style.display=what==='ans'?'flex':'none';
+  if(what==='ans')placePreview();show('place');}
 function endPlace(){hide('place');hide('home');$('#placeMark').style.display='none';drawAns();fillSettings();show('settings');}
 $('#place').addEventListener('pointerdown',e=>{if(e.target.closest('.pbar'))return;e.preventDefault();
+  if(placeWhat==='exit'){if(drag==='done')return;pp={x:e.clientX/innerWidth,y:e.clientY/innerHeight};cfg.exit={x:pp.x,y:pp.y};saveCfg();placePreview();
+    $('#placeMsg').textContent='Salvo ✓';drag='done';setTimeout(()=>{drag=null;endPlace();},600);return;}
   drag={id:e.pointerId,sx:e.clientX,sy:e.clientY,px:pp.x,py:pp.y};try{$('#place').setPointerCapture(e.pointerId);}catch(_){}});
-$('#place').addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;
+$('#place').addEventListener('pointermove',e=>{if(!drag||drag==='done'||e.pointerId!==drag.id)return;
   pp.x=Math.min(1,Math.max(0,drag.px+(e.clientX-drag.sx)/innerWidth));pp.y=Math.min(1,Math.max(0,drag.py+(e.clientY-drag.sy)/innerHeight));placePreview();});
-['pointerup','pointercancel'].forEach(t=>$('#place').addEventListener(t,()=>{drag=null;}));
+['pointerup','pointercancel'].forEach(t=>$('#place').addEventListener(t,()=>{if(drag!=='done')drag=null;}));
 $('#pSave').onclick=()=>{if(placeWhat==='ans'){cfg.ans.x=pp.x;cfg.ans.y=pp.y;cfg.ans.set=true;}else{cfg.exit={x:pp.x,y:pp.y};}saveCfg();endPlace();};
 $('#pCancel').onclick=()=>endPlace();
 $('#bAnsPos').onclick=()=>startPlace('ans');
