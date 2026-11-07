@@ -86,6 +86,10 @@ body{position:relative;height:var(--appH,100%);overflow:hidden;overscroll-behavi
 #menu .mopt b{width:30px;height:30px;border-radius:50%;background:#2c2c2e;display:flex;align-items:center;justify-content:center;font-size:15px}
 #menu .mopt.a{background:#2c2c2e}
 #menu .mopt small{display:block;font-size:12px;color:#8e8e93;margin-top:2px}
+#ansTag{position:absolute;z-index:5;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;font-weight:600;letter-spacing:.2px;display:none}
+#place{z-index:70;background:transparent}
+#place .msg{position:absolute;top:42%;left:20px;right:20px;text-align:center;background:rgba(0,0,0,.78);color:#fff;padding:14px;border-radius:14px;font-size:16px;font-weight:600;pointer-events:none}
+#place .mark{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border:3px dashed #ffd60a;border-radius:50%;pointer-events:none;display:none}
 /* ---------- SETTINGS ---------- */
 #settings{background:#f2f2f7;color:#000;z-index:50}
 #settings .scroll{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(var(--sat) + 12px) 16px calc(var(--sab) + 40px);-webkit-user-select:text;user-select:text}
@@ -146,6 +150,7 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
     <div class="dock" id="dock"></div>
   </div>
   <img id="homeShot" alt="">
+  <div id="ansTag"></div>
   <div class="homebar"></div>
 </div>
 
@@ -157,6 +162,9 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
     <div class="mopt" data-o="3"><b>3</b><div>Próxima carta<small>A que vem depois na ordem</small></div></div>
   </div>
 </div>
+
+<!-- POSICIONAR -->
+<div id="place" class="screen"><div class="mark" id="placeMark"></div><div class="msg" id="placeMsg"></div></div>
 
 <!-- SETTINGS -->
 <div id="settings" class="screen">
@@ -196,6 +204,25 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
     </div>
 
     <div class="sec">
+      <span class="sec-t">Resposta na Tela de Início</span>
+      <div class="box">
+        <div class="row">Mostrar<select id="sAnsOn"><option value="1">Sim</option><option value="0">Não</option></select></div>
+        <div class="row">Cor<select id="sAnsColor"><option value="#ffffff">Branco</option><option value="#000000">Preto</option><option value="#8e8e93">Cinza</option><option value="#ff3b30">Vermelho</option><option value="#0a84ff">Azul</option></select></div>
+        <div class="row">Tamanho<select id="sAnsSize"><option value="9">Bem pequeno</option><option value="11">Pequeno</option><option value="14">Médio</option></select></div>
+        <div class="row"><button class="btn" id="bAnsPos">Escolher o local da resposta</button><span id="ansPosSt" style="color:#8e8e93;font-size:14px"></span></div>
+      </div>
+      <div class="note">A resposta aparece pequena na Tela de Início falsa, no lugar que você tocar. Coloque sobre um ícone, na cor que mais disfarça.</div>
+    </div>
+
+    <div class="sec">
+      <span class="sec-t">Saída (voltar para a tela bloqueada)</span>
+      <div class="box">
+        <div class="row"><button class="btn" id="bExitPos">Escolher o ícone de saída</button><span id="exitPosSt" style="color:#8e8e93;font-size:14px"></span></div>
+      </div>
+      <div class="note">Na Tela de Início, tocar nesse ícone volta para a tela bloqueada. Enquanto nenhum ícone for escolhido, vale segurar o dedo 1,5 s em qualquer lugar.</div>
+    </div>
+
+    <div class="sec">
       <span class="sec-t">Papel de parede</span>
       <div class="box">
         <div class="row"><button class="btn" id="bWall">Escolher imagem…</button></div>
@@ -214,7 +241,7 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
 
     <div class="sec">
       <span class="sec-t">Gestos secretos</span>
-      <div class="note" style="margin-top:0">• Ao abrir o app: escolha a opção 1, 2 ou 3.<br>• Na tela bloqueada, arraste dois dedos juntos (em qualquer direção): abre estes ajustes.<br>• Na Tela de Início, segure o dedo parado em qualquer lugar por 1,5 s: volta para a tela bloqueada.</div>
+      <div class="note" style="margin-top:0">• Ao abrir o app: escolha a opção 1, 2 ou 3.<br>• Na tela bloqueada, arraste dois dedos juntos (em qualquer direção): abre estes ajustes.<br>• Na Tela de Início, toque no ícone de saída que você escolheu: volta para a tela bloqueada.</div>
     </div>
     <div id="sMsg" class="note" style="color:#ff3b30"></div>
     <div class="note" id="sVer" style="text-align:center;margin-top:20px"></div>
@@ -252,7 +279,7 @@ const SUITS={C:{n:'Paus',red:false},H:{n:'Copas',red:true},S:{n:'Espadas',red:fa
 const RANKS={1:'Ás',11:'Valete',12:'Dama',13:'Rei'};
 const MN_DEF=[[4,'C'],[2,'H'],[7,'D'],[3,'C'],[4,'H'],[6,'D'],[1,'S'],[5,'H'],[9,'S'],[2,'S'],[12,'H'],[3,'D'],[12,'C'],[8,'H'],[6,'S'],[5,'S'],[9,'H'],[13,'C'],[2,'D'],[11,'H'],[3,'S'],[8,'S'],[6,'H'],[10,'C'],[5,'D'],[13,'D'],
  [2,'C'],[3,'H'],[8,'D'],[5,'C'],[13,'S'],[11,'D'],[8,'C'],[10,'S'],[13,'H'],[11,'C'],[7,'S'],[10,'H'],[1,'D'],[4,'S'],[7,'H'],[4,'D'],[1,'C'],[9,'C'],[11,'S'],[12,'D'],[7,'C'],[12,'S'],[10,'D'],[6,'C'],[1,'H'],[9,'D']];
-let cfg=Object.assign({opt:1,fmt:'word',acc:'keep',suits:['S','H','C','D'],len:4,hint:'.25',table:MN_DEF},store.get('cfg',{}));
+let cfg=Object.assign({ans:{on:1,color:'#ffffff',size:11,x:.5,y:.5,set:false},exit:null,opt:1,fmt:'word',acc:'keep',suits:['S','H','C','D'],len:4,hint:'.25',table:MN_DEF},store.get('cfg',{}));
 let wall=store.get('wall',null), homeShot=store.get('homeShot',null);
 function saveCfg(){store.set('cfg',cfg);}
 
@@ -272,7 +299,7 @@ applyWall();
 function show(id){$('#'+id).classList.add('on');}
 function hide(id){$('#'+id).classList.remove('on');}
 function anim(el,frames,dur){try{return el.animate(frames,{duration:dur,easing:'cubic-bezier(.2,.8,.2,1)'});}catch(e){return null;}}
-function goLock(){['pass','home','settings','menu'].forEach(hide);code='';drawDots();show('lock');$('#lockContent').style.transform='';}
+function goLock(){['pass','home','settings','menu','place'].forEach(hide);code='';drawDots();show('lock');$('#lockContent').style.transform='';}
 
 /* ---------- lock: swipe up / long press ---------- */
 let sy=null,lpTimer=null,lpFired=false;
@@ -320,7 +347,7 @@ function drawHint(){const h=$('#hint');h.style.color='rgba(255,255,255,'+cfg.hin
       if(cfg.opt==2)t+='  ·  '+(p||'?');else if(cfg.opt==3){const nx=nextOf(e.rank,e.suit);t+='  ›  '+(nx?shortCard(nx[0],nx[1]):'?');}}}}
   h.textContent=t;}
 let busy=false;
-function press(n){if(busy||code.length>=cfg.len)return;code+=n;drawDots();if(code.length===cfg.len){pendingCopy=answerText(code);busy=true;setTimeout(check,140);}}
+function press(n){if(busy||code.length>=cfg.len)return;code+=n;drawDots();if(code.length===cfg.len){pendingCopy=answerText(code);lastAnswer=pendingCopy||'';busy=true;setTimeout(check,140);}}
 /* ---------- área de transferência (oculto) ---------- */
 const NOMES={1:'Ás',2:'Dois',3:'Três',4:'Quatro',5:'Cinco',6:'Seis',7:'Sete',8:'Oito',9:'Nove',10:'Dez',11:'Valete',12:'Dama',13:'Rei'};
 let pendingCopy=null;
@@ -335,6 +362,7 @@ function answerText(c){const e=decode(c);if(!e)return null;let t=null;
   else if(cfg.opt==3){const n=nextOf(e.rank,e.suit);t=n?cardName(n[0],n[1]):null;}
   else t=cardName(e.rank,e.suit);
   return t&&cfg.acc==='strip'?stripAcc(t):t;}
+let lastAnswer='';
 function doCopy(){const t=pendingCopy;if(!t)return;pendingCopy=null;
   const fallback=()=>{try{const ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');
       ta.style.cssText='position:fixed;top:0;left:0;opacity:0;width:1px;height:1px;font-size:16px;pointer-events:none';
@@ -347,6 +375,7 @@ function check(){const e=decode(code);
     setTimeout(()=>{code='';drawDots();busy=false;d.classList.remove('shake');},480);}}
 
 function success(){
+  drawAns();
   show('home');
   anim($('#home'),[{transform:'scale(1.12)',opacity:0},{transform:'scale(1)',opacity:1}],420);
   const a=anim($('#pass'),[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.06)'}],300);
@@ -400,8 +429,11 @@ let hold=null,holdXY=null,eatClick=false;
 function cancelHold(){clearTimeout(hold);hold=null;}
 document.addEventListener('pointerdown',e=>{cancelHold();
   /* só na Tela de Início (com Fotos/foto fechados) */
-  if(!$('#home').classList.contains('on')||$('#settings').classList.contains('on'))return;
+  if(!$('#home').classList.contains('on')||$('#settings').classList.contains('on')||$('#place').classList.contains('on'))return;
   if(!e.isPrimary)return;
+  if(cfg.exit){const r=innerWidth*0.09;
+    if(Math.hypot(e.clientX-cfg.exit.x*innerWidth,e.clientY-cfg.exit.y*innerHeight)<r){e.preventDefault();e.stopPropagation();eatClick=true;setTimeout(()=>eatClick=false,600);goLock();}
+    return;}
   holdXY=[e.clientX,e.clientY];
   hold=setTimeout(()=>{hold=null;eatClick=true;setTimeout(()=>eatClick=false,600);goLock();},1500);},true);
 document.addEventListener('pointermove',e=>{if(hold&&holdXY&&Math.hypot(e.clientX-holdXY[0],e.clientY-holdXY[1])>12)cancelHold();},true);
@@ -414,8 +446,9 @@ document.addEventListener('click',e=>{if(eatClick){e.stopPropagation();e.prevent
 
 /* ---------- settings ---------- */
 function openSettings(){fillSettings();show('settings');anim($('#settings'),[{transform:'translateY(100%)'},{transform:'translateY(0)'}],320);}
-function fillSettings(){$('#sVer').textContent='Versão 3 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
-  $('#sOpt').value=String(cfg.opt);$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
+function fillSettings(){$('#sVer').textContent='Versão 4 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
+  $('#sOpt').value=String(cfg.opt);$('#sAnsOn').value=String(+cfg.ans.on);$('#sAnsColor').value=cfg.ans.color;$('#sAnsSize').value=String(cfg.ans.size);
+  $('#ansPosSt').textContent=cfg.ans.set?'definido ✓':'centro da tela';$('#exitPosSt').textContent=cfg.exit?'definido ✓':'não definido';$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
   if(document.activeElement!==$('#sTable'))$('#sTable').value=(cfg.table||[]).map(c=>cardName2(c[0],c[1])).join('\n');tableState();
   $$('.sSuit').forEach(s=>{s.innerHTML=Object.keys(SUITS).map(k=>'<option value="'+k+'">'+SUITS[k].n+'</option>').join('');s.value=cfg.suits[+s.dataset.i];});
   const i=cfg.suits.indexOf('H');$('#sEx').textContent=(i+1)+'13'+(cfg.len===6?'580':'7')+' = Rei de Copas';
@@ -453,6 +486,29 @@ $('#fHome').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f
 $('#bHomeDel').onclick=()=>{homeShot=null;store.set('homeShot',null);applyHome();fillSettings();};
 if(location.hash==='#config')openSettings();
 /* ---------- menu inicial: escolhe a opção ao abrir ---------- */
+/* ---------- resposta na Tela de Início ---------- */
+function drawAns(){const a=cfg.ans,t=$('#ansTag');
+  if(!+a.on||!lastAnswer){t.style.display='none';return;}
+  t.textContent=lastAnswer;t.style.display='block';t.style.color=a.color;t.style.fontSize=a.size+'px';
+  t.style.left=(a.x*100)+'%';t.style.top=(a.y*100)+'%';
+  t.style.textShadow=(a.color==='#000000')?'0 0 2px rgba(255,255,255,.25)':'0 0 2px rgba(0,0,0,.25)';}
+let placeWhat=null;
+function startPlace(what){placeWhat=what;hide('settings');show('home');
+  $('#placeMsg').textContent=what==='ans'?'Toque onde a resposta deve aparecer':'Toque no ícone que vai servir de saída';
+  const m=$('#placeMark');m.style.display='none';
+  if(what==='ans'){const keep=lastAnswer;lastAnswer=lastAnswer||'Rei de Copas';drawAns();lastAnswer=keep;}
+  show('place');}
+$('#place').addEventListener('click',e=>{const x=e.clientX/innerWidth,y=e.clientY/innerHeight;
+  if(placeWhat==='ans'){cfg.ans.x=x;cfg.ans.y=y;cfg.ans.set=true;}else{cfg.exit={x,y};}
+  saveCfg();const m=$('#placeMark');m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';m.style.display='block';
+  if(placeWhat==='ans'){const keep=lastAnswer;lastAnswer=lastAnswer||'Rei de Copas';drawAns();lastAnswer=keep;}
+  $('#placeMsg').textContent='Salvo ✓';
+  setTimeout(()=>{hide('place');hide('home');drawAns();fillSettings();show('settings');},600);});
+$('#bAnsPos').onclick=()=>startPlace('ans');
+$('#bExitPos').onclick=()=>startPlace('exit');
+$('#sAnsOn').onchange=e=>{cfg.ans.on=+e.target.value;saveCfg();};
+$('#sAnsColor').onchange=e=>{cfg.ans.color=e.target.value;saveCfg();};
+$('#sAnsSize').onchange=e=>{cfg.ans.size=+e.target.value;saveCfg();};
 function markMenu(){$$('#menu .mopt').forEach(m=>m.classList.toggle('a',+m.dataset.o===+cfg.opt));}
 markMenu();
 $$('#menu .mopt').forEach(m=>m.addEventListener('click',()=>{cfg.opt=+m.dataset.o;saveCfg();markMenu();
