@@ -309,7 +309,7 @@ lock.addEventListener('touchmove',e=>{if(t2&&e.touches.length>=2){const a=avg(e.
 lock.addEventListener('touchend',e=>{if(e.touches.length===0){t2=null;setTimeout(()=>{multi=false;},50);}},{passive:true});
 lock.addEventListener('pointerdown',e=>{if(multi||!e.isPrimary){sy=null;return;}
   if(qOpen()){sy=null;if(!e.target.closest('#qmenu'))closeQ();return;}
-  if(cfg.qpos&&Math.hypot(e.clientX-cfg.qpos.x*innerWidth,e.clientY-cfg.qpos.y*innerHeight)<innerWidth*0.09){sy=null;openQ();return;}
+  if(qHit(e)){sy=null;openQ();return;}
   sy=e.clientY;lpFired=false;});
 lock.addEventListener('pointermove',e=>{if(sy==null||multi||!e.isPrimary)return;const dy=e.clientY-sy;
   if(dy<0)lc.style.transform='translateY('+(dy*.6)+'px)';});
@@ -451,9 +451,9 @@ document.addEventListener('click',e=>{if(eatClick){e.stopPropagation();e.prevent
 
 /* ---------- settings ---------- */
 function openSettings(){fillSettings();show('settings');anim($('#settings'),[{transform:'translateY(100%)'},{transform:'translateY(0)'}],320);}
-function fillSettings(){$('#sVer').textContent='Versão 10 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
+function fillSettings(){$('#sVer').textContent='Versão 11 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
   $('#sOpt').value=String(cfg.opt);$('#sAnsOn').value=String(+cfg.ans.on);$('#sAnsColor').value=cfg.ans.color;$('#sAnsSize').value=String(cfg.ans.size);
-  $('#ansPosSt').textContent=cfg.ans.set?'definido ✓':'centro da tela';$('#exitPosSt').textContent=cfg.exit?'definido ✓':'não definido';$('#qPosSt').textContent=cfg.qpos?'definido ✓':'não definido';$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
+  $('#ansPosSt').textContent=cfg.ans.set?'definido ✓':'centro da tela';$('#exitPosSt').textContent=cfg.exit?'definido ✓':'não definido';$('#qPosSt').textContent=cfg.qpos?'definido ✓':'lanterna (padrão)';$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
   if(document.activeElement!==$('#sTable'))$('#sTable').value=(cfg.table||[]).map(c=>cardName2(c[0],c[1])).join('\n');tableState();
   $$('.sSuit').forEach(s=>{s.innerHTML=Object.keys(SUITS).map(k=>'<option value="'+k+'">'+SUITS[k].n+'</option>').join('');s.value=cfg.suits[+s.dataset.i];});
   const i=cfg.suits.indexOf('H');$('#sEx').textContent=(i+1)+'13'+(cfg.len===6?'580':'7')+' = Rei de Copas';
@@ -524,11 +524,15 @@ $('#sAnsOn').onchange=e=>{cfg.ans.on=+e.target.value;saveCfg();};
 $('#sAnsColor').onchange=e=>{cfg.ans.color=e.target.value;saveCfg();};
 $('#sAnsSize').onchange=e=>{cfg.ans.size=+e.target.value;saveCfg();};
 /* ---------- menu rápido de opções na Tela de Início ---------- */
+/* ponto do menu: o escolhido nos ajustes; se nenhum, a lanterna */
+function qPoint(){if(cfg.qpos)return{x:cfg.qpos.x*innerWidth,y:cfg.qpos.y*innerHeight};
+  const r=$('.lk-bottom .round').getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2};}
+function qHit(e){const q=qPoint();return Math.hypot(e.clientX-q.x,e.clientY-q.y)<innerWidth*0.09;}
 function qOpen(){return $('#qmenu').style.display==='block';}
 function closeQ(){$('#qmenu').style.display='none';}
 function openQ(){const q=$('#qmenu');$$('#qmenu .qo').forEach(o=>o.querySelector('i').textContent=+o.dataset.o===+cfg.opt?'✓':'');
   q.style.display='block';const W=innerWidth,H=innerHeight,qw=q.offsetWidth,qh=q.offsetHeight;
-  const ix=cfg.qpos.x*W,iy=cfg.qpos.y*H;let left=Math.min(Math.max(12,ix-qw/2),W-qw-12);let top=iy+44;if(top+qh>H-30)top=iy-44-qh;
+  const qp=qPoint(),ix=qp.x,iy=qp.y;let left=Math.min(Math.max(12,ix-qw/2),W-qw-12);let top=iy+44;if(top+qh>H-30)top=iy-44-qh;
   q.style.left=left+'px';q.style.top=top+'px';anim(q,[{opacity:0,transform:'scale(.85)'},{opacity:1,transform:'scale(1)'}],180);}
 $$('#qmenu .qo').forEach(o=>{o.addEventListener('pointerdown',e=>e.stopPropagation());o.addEventListener('click',e=>{e.stopPropagation();cfg.opt=+o.dataset.o;closeQ();});});
 /* modo offline */
