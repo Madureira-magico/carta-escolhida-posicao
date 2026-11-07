@@ -172,10 +172,10 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
       <div class="box">
         <div class="row"><button class="btn" id="bQPos">Escolher o ponto do menu de opções</button><span id="qPosSt" style="color:#8e8e93;font-size:14px"></span></div>
         <div class="row">Opção<select id="sOpt"><option value="1">1 · Carta digitada</option><option value="2">2 · Posição na Mnemônica</option><option value="3">3 · Próxima carta</option></select></div>
-        <div class="row">Formato da carta<select id="sFmt"><option value="word">Quatro de Paus</option><option value="num">4 de Paus</option></select></div>
+        <div class="row">Formato da carta<select id="sFmt"><option value="word">o Quatro de Paus</option><option value="num">o 4 de Paus</option></select></div>
         <div class="row">Acentos<select id="sAcc"><option value="keep">Manter (Três)</option><option value="strip">Remover (Tres)</option></select></div>
       </div>
-      <div class="note">O app sempre abre na opção 1 (Carta digitada). Para trocar antes de digitar, toque no ponto do menu de opções na tela bloqueada (ex.: sobre a lanterna, o cadeado ou o relógio): abre um menu no estilo do iPhone com as 3 opções. Ao soltar o dedo do último número do código, a resposta é copiada em segredo para a área de transferência. Ex.: digitou Rei de Copas → 1 copia "Rei de Copas", 2 copia "35", 3 copia "Valete de Paus". Depois da posição 52 vem a 1.</div>
+      <div class="note">O app sempre abre na opção 1 (Carta digitada). Para trocar antes de digitar, toque no ponto do menu de opções na tela bloqueada (ex.: sobre a lanterna, o cadeado ou o relógio): abre um menu no estilo do iPhone com as 3 opções. Ao soltar o dedo do último número do código, a resposta é copiada em segredo para a área de transferência. Ex.: digitou Rei de Copas → 1 copia "o Rei de Copas", 2 copia "35", 3 copia "o Valete de Paus". As cartas sempre vão com artigo: "a" para Dama e "o" para as demais. Depois da posição 52 vem a 1.</div>
     </div>
 
     <div class="sec">
@@ -355,6 +355,7 @@ function decode(c){const s=+c[0],v=+c.slice(1,3);if(s>=1&&s<=4&&v>=1&&v<=13)retu
 function tableOK(){const t=cfg.table;return Array.isArray(t)&&t.length===52;}
 function posOf(r,su){if(!tableOK())return null;const i=cfg.table.findIndex(c=>c[0]===r&&c[1]===su);return i<0?null:i+1;}
 function nextOf(r,su){const p=posOf(r,su);if(!p)return null;return cfg.table[p%52];}
+function cardWithArt(r,su){return (r===12?'a ':'o ')+cardName(r,su);} /* Dama = a; Ás, 2–10, Valete, Rei = o */
 function cardName(r,su){const v=cfg.fmt==='num'?({1:'Ás',11:'Valete',12:'Dama',13:'Rei'}[r]||String(r)):NOMES[r];return v+' de '+SUITS[su].n;}
 /* resposta curta para a Tela de Início: 4♥ / 51 / Q♠ */
 function answerShort(c){const e=decode(c);if(!e)return'';const sc=(r,su)=>(LBL[r]||String(r))+SYM[su];
@@ -364,8 +365,8 @@ function answerShort(c){const e=decode(c);if(!e)return'';const sc=(r,su)=>(LBL[r
 function stripAcc(t){return t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
 function answerText(c){const e=decode(c);if(!e)return null;let t=null;
   if(cfg.opt==2){const p=posOf(e.rank,e.suit);t=p?String(p):null;}
-  else if(cfg.opt==3){const n=nextOf(e.rank,e.suit);t=n?cardName(n[0],n[1]):null;}
-  else t=cardName(e.rank,e.suit);
+  else if(cfg.opt==3){const n=nextOf(e.rank,e.suit);t=n?cardWithArt(n[0],n[1]):null;}
+  else t=cardWithArt(e.rank,e.suit);
   return t&&cfg.acc==='strip'?stripAcc(t):t;}
 let lastAnswer='',lastCode='';
 function doCopy(){const t=pendingCopy;if(!t)return;pendingCopy=null;
@@ -451,7 +452,7 @@ document.addEventListener('click',e=>{if(eatClick){e.stopPropagation();e.prevent
 
 /* ---------- settings ---------- */
 function openSettings(){fillSettings();show('settings');anim($('#settings'),[{transform:'translateY(100%)'},{transform:'translateY(0)'}],320);}
-function fillSettings(){$('#sVer').textContent='Versão 11 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
+function fillSettings(){$('#sVer').textContent='Versão 12 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
   $('#sOpt').value=String(cfg.opt);$('#sAnsOn').value=String(+cfg.ans.on);$('#sAnsColor').value=cfg.ans.color;$('#sAnsSize').value=String(cfg.ans.size);
   $('#ansPosSt').textContent=cfg.ans.set?'definido ✓':'centro da tela';$('#exitPosSt').textContent=cfg.exit?'definido ✓':'não definido';$('#qPosSt').textContent=cfg.qpos?'definido ✓':'lanterna (padrão)';$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
   if(document.activeElement!==$('#sTable'))$('#sTable').value=(cfg.table||[]).map(c=>cardName2(c[0],c[1])).join('\n');tableState();
