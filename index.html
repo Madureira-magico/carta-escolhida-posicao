@@ -79,13 +79,13 @@ body{position:relative;height:var(--appH,100%);overflow:hidden;overscroll-behavi
 .dock{position:absolute;left:12px;right:12px;bottom:calc(var(--sab) + 12px);height:94px;border-radius:34px;background:rgba(255,255,255,.25);
   -webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);display:flex;justify-content:space-around;align-items:center;padding:0 10px}
 
-/* ---------- MENU INICIAL ---------- */
-#menu{background:#000;z-index:40}
-#menu .mbox{position:absolute;left:24px;right:24px;top:50%;transform:translateY(-50%)}
-#menu .mopt{display:flex;align-items:center;gap:14px;padding:16px 18px;margin-bottom:10px;border-radius:14px;background:#1c1c1e;font-size:17px;color:#fff}
-#menu .mopt b{width:30px;height:30px;border-radius:50%;background:#2c2c2e;display:flex;align-items:center;justify-content:center;font-size:15px}
-#menu .mopt.a{background:#2c2c2e}
-#menu .mopt small{display:block;font-size:12px;color:#8e8e93;margin-top:2px}
+/* ---------- MENU RÁPIDO (estilo menu do iOS) ---------- */
+#qmenu{position:absolute;z-index:8;width:230px;border-radius:14px;overflow:hidden;display:none;
+  background:rgba(245,245,247,.86);-webkit-backdrop-filter:blur(30px) saturate(1.6);backdrop-filter:blur(30px) saturate(1.6);
+  box-shadow:0 10px 40px rgba(0,0,0,.35);color:#000;transform-origin:top left}
+#qmenu .qo{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;font-size:17px;border-bottom:.5px solid rgba(60,60,67,.29)}
+#qmenu .qo:last-child{border-bottom:0}
+#qmenu .qo i{font-style:normal;color:#0a84ff;font-weight:600;width:18px;text-align:center}
 #ansTag{position:absolute;z-index:5;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none;font-weight:600;letter-spacing:.2px;display:none}
 #place{z-index:70;background:transparent;touch-action:none}
 #place .pbar{position:absolute;left:16px;right:16px;bottom:calc(var(--sab) + 24px);display:flex;gap:10px}
@@ -114,7 +114,7 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
 <body>
 
 <!-- LOCK -->
-<div id="lock" class="screen">
+<div id="lock" class="screen on">
   <div class="wall def" id="lockWall"></div>
   <div id="lockContent">
     <div class="lk-top">
@@ -127,6 +127,7 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
       <div class="round"><svg viewBox="0 0 24 24" fill="#fff"><path d="M9 4h6l1.6 2.2H20a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.2a2 2 0 0 1 2-2h3.4L9 4zm3 4.4a4.6 4.6 0 1 0 0 9.2 4.6 4.6 0 0 0 0-9.2zm0 2a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2z"/></svg></div>
     </div>
   </div>
+  <div id="qmenu"><div class="qo" data-o="1"><span>Carta digitada</span><i></i></div><div class="qo" data-o="2"><span>Posição</span><i></i></div><div class="qo" data-o="3"><span>Próxima carta</span><i></i></div></div>
   <div class="homebar"></div>
 </div>
 
@@ -157,15 +158,6 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
   <div class="homebar"></div>
 </div>
 
-<!-- MENU INICIAL -->
-<div id="menu" class="screen on">
-  <div class="mbox">
-    <div class="mopt" data-o="1"><b>1</b><div>Carta digitada<small>Ex.: Rei de Copas</small></div></div>
-    <div class="mopt" data-o="2"><b>2</b><div>Posição na Mnemônica<small>Ex.: 35</small></div></div>
-    <div class="mopt" data-o="3"><b>3</b><div>Próxima carta<small>A que vem depois na ordem</small></div></div>
-  </div>
-</div>
-
 <!-- POSICIONAR -->
 <div id="place" class="screen"><div class="mark" id="placeMark"></div><div class="msg" id="placeMsg"></div><div class="pbar"><button id="pCancel">Cancelar</button><button class="ok" id="pSave">Salvar</button></div></div>
 
@@ -178,11 +170,12 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
     <div class="sec">
       <span class="sec-t">Resposta copiada</span>
       <div class="box">
+        <div class="row"><button class="btn" id="bQPos">Escolher o ponto do menu de opções</button><span id="qPosSt" style="color:#8e8e93;font-size:14px"></span></div>
         <div class="row">Opção<select id="sOpt"><option value="1">1 · Carta digitada</option><option value="2">2 · Posição na Mnemônica</option><option value="3">3 · Próxima carta</option></select></div>
         <div class="row">Formato da carta<select id="sFmt"><option value="word">Quatro de Paus</option><option value="num">4 de Paus</option></select></div>
         <div class="row">Acentos<select id="sAcc"><option value="keep">Manter (Três)</option><option value="strip">Remover (Tres)</option></select></div>
       </div>
-      <div class="note">A opção também é perguntada sempre que o app abre. Ao soltar o dedo do último número do código, a resposta é copiada em segredo para a área de transferência. Ex.: digitou Rei de Copas → 1 copia "Rei de Copas", 2 copia "35", 3 copia "Valete de Paus". Depois da posição 52 vem a 1.</div>
+      <div class="note">O app sempre abre na opção 1 (Carta digitada). Para trocar antes de digitar, toque no ponto do menu de opções na tela bloqueada (ex.: sobre a lanterna, o cadeado ou o relógio): abre um menu no estilo do iPhone com as 3 opções. Ao soltar o dedo do último número do código, a resposta é copiada em segredo para a área de transferência. Ex.: digitou Rei de Copas → 1 copia "Rei de Copas", 2 copia "35", 3 copia "Valete de Paus". Depois da posição 52 vem a 1.</div>
     </div>
 
     <div class="sec">
@@ -244,7 +237,7 @@ img{-webkit-touch-callout:none;-webkit-user-drag:none}
 
     <div class="sec">
       <span class="sec-t">Gestos secretos</span>
-      <div class="note" style="margin-top:0">• Ao abrir o app: escolha a opção 1, 2 ou 3.<br>• Na tela bloqueada, arraste dois dedos juntos (em qualquer direção): abre estes ajustes.<br>• Na Tela de Início, toque no ícone de saída que você escolheu: volta para a tela bloqueada.</div>
+      <div class="note" style="margin-top:0">• O app abre direto na tela bloqueada, na opção 1.<br>• Na tela bloqueada, o ponto do menu de opções abre as 3 opções.<br>• Na tela bloqueada, arraste dois dedos juntos (em qualquer direção): abre estes ajustes.<br>• Na Tela de Início, toque no ícone de saída que você escolheu: volta para a tela bloqueada.</div>
     </div>
     <div id="sMsg" class="note" style="color:#ff3b30"></div>
     <div class="note" id="sVer" style="text-align:center;margin-top:20px"></div>
@@ -282,9 +275,10 @@ const SUITS={C:{n:'Paus',red:false},H:{n:'Copas',red:true},S:{n:'Espadas',red:fa
 const RANKS={1:'Ás',11:'Valete',12:'Dama',13:'Rei'};
 const MN_DEF=[[4,'C'],[2,'H'],[7,'D'],[3,'C'],[4,'H'],[6,'D'],[1,'S'],[5,'H'],[9,'S'],[2,'S'],[12,'H'],[3,'D'],[12,'C'],[8,'H'],[6,'S'],[5,'S'],[9,'H'],[13,'C'],[2,'D'],[11,'H'],[3,'S'],[8,'S'],[6,'H'],[10,'C'],[5,'D'],[13,'D'],
  [2,'C'],[3,'H'],[8,'D'],[5,'C'],[13,'S'],[11,'D'],[8,'C'],[10,'S'],[13,'H'],[11,'C'],[7,'S'],[10,'H'],[1,'D'],[4,'S'],[7,'H'],[4,'D'],[1,'C'],[9,'C'],[11,'S'],[12,'D'],[7,'C'],[12,'S'],[10,'D'],[6,'C'],[1,'H'],[9,'D']];
-let cfg=Object.assign({ans:{on:1,color:'#ffffff',size:11,x:.5,y:.5,set:false},exit:null,opt:1,fmt:'word',acc:'keep',suits:['S','H','C','D'],len:4,hint:'.25',table:MN_DEF},store.get('cfg',{}));
+let cfg=Object.assign({qpos:null,ans:{on:1,color:'#ffffff',size:11,x:.5,y:.5,set:false},exit:null,opt:1,fmt:'word',acc:'keep',suits:['S','H','C','D'],len:4,hint:'.25',table:MN_DEF},store.get('cfg',{}));
 let wall=store.get('wall',null), homeShot=store.get('homeShot',null);
 function saveCfg(){store.set('cfg',cfg);}
+cfg.opt=1; /* sempre abre na opção 1 */
 
 /* ---------- clock ---------- */
 const fTime=new Intl.DateTimeFormat('pt-BR',{hour:'2-digit',minute:'2-digit',hour12:false});
@@ -302,7 +296,7 @@ applyWall();
 function show(id){$('#'+id).classList.add('on');}
 function hide(id){$('#'+id).classList.remove('on');}
 function anim(el,frames,dur){try{return el.animate(frames,{duration:dur,easing:'cubic-bezier(.2,.8,.2,1)'});}catch(e){return null;}}
-function goLock(){['pass','home','settings','menu','place'].forEach(hide);code='';drawDots();show('lock');$('#lockContent').style.transform='';}
+function goLock(){closeQ();['pass','home','settings','place'].forEach(hide);code='';drawDots();show('lock');$('#lockContent').style.transform='';}
 
 /* ---------- lock: swipe up / long press ---------- */
 let sy=null,lpTimer=null,lpFired=false;
@@ -313,7 +307,10 @@ const avg=t=>({x:(t[0].clientX+t[1].clientX)/2,y:(t[0].clientY+t[1].clientY)/2})
 lock.addEventListener('touchstart',e=>{if(e.touches.length>=2){multi=true;sy=null;lc.style.transform='';t2=avg(e.touches);}},{passive:true});
 lock.addEventListener('touchmove',e=>{if(t2&&e.touches.length>=2){const a=avg(e.touches);if(Math.hypot(a.x-t2.x,a.y-t2.y)>60){t2=null;openSettings();}}},{passive:true});
 lock.addEventListener('touchend',e=>{if(e.touches.length===0){t2=null;setTimeout(()=>{multi=false;},50);}},{passive:true});
-lock.addEventListener('pointerdown',e=>{if(multi||!e.isPrimary){sy=null;return;}sy=e.clientY;lpFired=false;});
+lock.addEventListener('pointerdown',e=>{if(multi||!e.isPrimary){sy=null;return;}
+  if(qOpen()){sy=null;if(!e.target.closest('#qmenu'))closeQ();return;}
+  if(cfg.qpos&&Math.hypot(e.clientX-cfg.qpos.x*innerWidth,e.clientY-cfg.qpos.y*innerHeight)<innerWidth*0.09){sy=null;openQ();return;}
+  sy=e.clientY;lpFired=false;});
 lock.addEventListener('pointermove',e=>{if(sy==null||multi||!e.isPrimary)return;const dy=e.clientY-sy;
   if(dy<0)lc.style.transform='translateY('+(dy*.6)+'px)';});
 function endLock(e){clearTimeout(lpTimer);if(multi){sy=null;lc.style.transform='';return;}if(sy==null||lpFired||!e.isPrimary)return;const dy=e.clientY-sy;sy=null;
@@ -350,7 +347,7 @@ function drawHint(){const h=$('#hint');h.style.color='rgba(255,255,255,'+cfg.hin
       if(cfg.opt==2)t+='  ·  '+(p||'?');else if(cfg.opt==3){const nx=nextOf(e.rank,e.suit);t+='  ›  '+(nx?shortCard(nx[0],nx[1]):'?');}}}}
   h.textContent=t;}
 let busy=false;
-function press(n){if(busy||code.length>=cfg.len)return;code+=n;drawDots();if(code.length===cfg.len){pendingCopy=answerText(code);lastAnswer=answerShort(code);busy=true;setTimeout(check,140);}}
+function press(n){if(busy||code.length>=cfg.len)return;code+=n;drawDots();if(code.length===cfg.len){lastCode=code;pendingCopy=answerText(code);lastAnswer=answerShort(code);busy=true;setTimeout(check,140);}}
 /* ---------- área de transferência (oculto) ---------- */
 const NOMES={1:'Ás',2:'Dois',3:'Três',4:'Quatro',5:'Cinco',6:'Seis',7:'Sete',8:'Oito',9:'Nove',10:'Dez',11:'Valete',12:'Dama',13:'Rei'};
 let pendingCopy=null;
@@ -370,7 +367,7 @@ function answerText(c){const e=decode(c);if(!e)return null;let t=null;
   else if(cfg.opt==3){const n=nextOf(e.rank,e.suit);t=n?cardName(n[0],n[1]):null;}
   else t=cardName(e.rank,e.suit);
   return t&&cfg.acc==='strip'?stripAcc(t):t;}
-let lastAnswer='';
+let lastAnswer='',lastCode='';
 function doCopy(){const t=pendingCopy;if(!t)return;pendingCopy=null;
   const fallback=()=>{try{const ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');
       ta.style.cssText='position:fixed;top:0;left:0;opacity:0;width:1px;height:1px;font-size:16px;pointer-events:none';
@@ -454,15 +451,15 @@ document.addEventListener('click',e=>{if(eatClick){e.stopPropagation();e.prevent
 
 /* ---------- settings ---------- */
 function openSettings(){fillSettings();show('settings');anim($('#settings'),[{transform:'translateY(100%)'},{transform:'translateY(0)'}],320);}
-function fillSettings(){$('#sVer').textContent='Versão 8 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
+function fillSettings(){$('#sVer').textContent='Versão 10 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
   $('#sOpt').value=String(cfg.opt);$('#sAnsOn').value=String(+cfg.ans.on);$('#sAnsColor').value=cfg.ans.color;$('#sAnsSize').value=String(cfg.ans.size);
-  $('#ansPosSt').textContent=cfg.ans.set?'definido ✓':'centro da tela';$('#exitPosSt').textContent=cfg.exit?'definido ✓':'não definido';$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
+  $('#ansPosSt').textContent=cfg.ans.set?'definido ✓':'centro da tela';$('#exitPosSt').textContent=cfg.exit?'definido ✓':'não definido';$('#qPosSt').textContent=cfg.qpos?'definido ✓':'não definido';$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
   if(document.activeElement!==$('#sTable'))$('#sTable').value=(cfg.table||[]).map(c=>cardName2(c[0],c[1])).join('\n');tableState();
   $$('.sSuit').forEach(s=>{s.innerHTML=Object.keys(SUITS).map(k=>'<option value="'+k+'">'+SUITS[k].n+'</option>').join('');s.value=cfg.suits[+s.dataset.i];});
   const i=cfg.suits.indexOf('H');$('#sEx').textContent=(i+1)+'13'+(cfg.len===6?'580':'7')+' = Rei de Copas';
 }
 $('#sLen').onchange=e=>{cfg.len=+e.target.value;saveCfg();fillSettings();};
-$('#sOpt').onchange=e=>{cfg.opt=+e.target.value;saveCfg();markMenu();};
+$('#sOpt').onchange=e=>{cfg.opt=+e.target.value;};
 $('#sFmt').onchange=e=>{cfg.fmt=e.target.value;saveCfg();fillSettings();};
 $('#sAcc').onchange=e=>{cfg.acc=e.target.value;saveCfg();};
 /* tabela da Mnemônica */
@@ -505,14 +502,14 @@ function placePreview(){
   if(placeWhat==='ans'){const keep=lastAnswer,ox=cfg.ans.x,oy=cfg.ans.y;lastAnswer=lastAnswer||'4♥︎';cfg.ans.x=pp.x;cfg.ans.y=pp.y;
     const on=cfg.ans.on;cfg.ans.on=1;drawAns();cfg.ans.on=on;cfg.ans.x=ox;cfg.ans.y=oy;lastAnswer=keep;}
   else{const m=$('#placeMark');m.style.display='block';m.style.left=(pp.x*innerWidth)+'px';m.style.top=(pp.y*innerHeight)+'px';}}
-function startPlace(what){placeWhat=what;hide('settings');show('home');$('#placeMark').style.display='none';
-  pp=what==='ans'?{x:cfg.ans.x,y:cfg.ans.y}:(cfg.exit?{x:cfg.exit.x,y:cfg.exit.y}:{x:.5,y:.5});
-  $('#placeMsg').textContent=what==='ans'?'Arraste o dedo em qualquer lugar para mover a resposta':'Toque no ícone que vai servir de saída';
+function startPlace(what){placeWhat=what;hide('settings');if(what==='qpos')show('lock');else show('home');$('#placeMark').style.display='none';
+  pp=what==='ans'?{x:cfg.ans.x,y:cfg.ans.y}:{x:.5,y:.5};
+  $('#placeMsg').textContent=what==='ans'?'Arraste o dedo em qualquer lugar para mover a resposta':(what==='exit'?'Toque no ícone que vai servir de saída':'Toque no ponto da tela bloqueada que vai abrir o menu de opções');
   $('#place .pbar').style.display=what==='ans'?'flex':'none';
   if(what==='ans')placePreview();show('place');}
-function endPlace(){hide('place');hide('home');$('#placeMark').style.display='none';drawAns();fillSettings();show('settings');}
+function endPlace(){hide('place');if(placeWhat!=='qpos')hide('home');$('#placeMark').style.display='none';drawAns();fillSettings();show('settings');}
 $('#place').addEventListener('pointerdown',e=>{if(e.target.closest('.pbar'))return;e.preventDefault();
-  if(placeWhat==='exit'){if(drag==='done')return;pp={x:e.clientX/innerWidth,y:e.clientY/innerHeight};cfg.exit={x:pp.x,y:pp.y};saveCfg();placePreview();
+  if(placeWhat!=='ans'){if(drag==='done')return;pp={x:e.clientX/innerWidth,y:e.clientY/innerHeight};cfg[placeWhat==='exit'?'exit':'qpos']={x:pp.x,y:pp.y};saveCfg();placePreview();
     $('#placeMsg').textContent='Salvo ✓';drag='done';setTimeout(()=>{drag=null;endPlace();},600);return;}
   drag={id:e.pointerId,sx:e.clientX,sy:e.clientY,px:pp.x,py:pp.y};try{$('#place').setPointerCapture(e.pointerId);}catch(_){}});
 $('#place').addEventListener('pointermove',e=>{if(!drag||drag==='done'||e.pointerId!==drag.id)return;
@@ -522,13 +519,18 @@ $('#pSave').onclick=()=>{if(placeWhat==='ans'){cfg.ans.x=pp.x;cfg.ans.y=pp.y;cfg
 $('#pCancel').onclick=()=>endPlace();
 $('#bAnsPos').onclick=()=>startPlace('ans');
 $('#bExitPos').onclick=()=>startPlace('exit');
+$('#bQPos').onclick=()=>startPlace('qpos');
 $('#sAnsOn').onchange=e=>{cfg.ans.on=+e.target.value;saveCfg();};
 $('#sAnsColor').onchange=e=>{cfg.ans.color=e.target.value;saveCfg();};
 $('#sAnsSize').onchange=e=>{cfg.ans.size=+e.target.value;saveCfg();};
-function markMenu(){$$('#menu .mopt').forEach(m=>m.classList.toggle('a',+m.dataset.o===+cfg.opt));}
-markMenu();
-$$('#menu .mopt').forEach(m=>m.addEventListener('click',()=>{cfg.opt=+m.dataset.o;saveCfg();markMenu();
-  show('lock');hide('menu');anim($('#lock'),[{opacity:0},{opacity:1}],300);}));
+/* ---------- menu rápido de opções na Tela de Início ---------- */
+function qOpen(){return $('#qmenu').style.display==='block';}
+function closeQ(){$('#qmenu').style.display='none';}
+function openQ(){const q=$('#qmenu');$$('#qmenu .qo').forEach(o=>o.querySelector('i').textContent=+o.dataset.o===+cfg.opt?'✓':'');
+  q.style.display='block';const W=innerWidth,H=innerHeight,qw=q.offsetWidth,qh=q.offsetHeight;
+  const ix=cfg.qpos.x*W,iy=cfg.qpos.y*H;let left=Math.min(Math.max(12,ix-qw/2),W-qw-12);let top=iy+44;if(top+qh>H-30)top=iy-44-qh;
+  q.style.left=left+'px';q.style.top=top+'px';anim(q,[{opacity:0,transform:'scale(.85)'},{opacity:1,transform:'scale(1)'}],180);}
+$$('#qmenu .qo').forEach(o=>{o.addEventListener('pointerdown',e=>e.stopPropagation());o.addEventListener('click',e=>{e.stopPropagation();cfg.opt=+o.dataset.o;closeQ();});});
 /* modo offline */
 if('serviceWorker' in navigator&&location.protocol==='https:'){addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 
