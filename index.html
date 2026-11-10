@@ -105,6 +105,7 @@ body{position:relative;height:var(--appH,100%);overflow:hidden;overscroll-behavi
 .row select{font-size:16px;border:0;background:transparent;color:#0a7aff;text-align:right;-webkit-appearance:none;appearance:none}
 .btn{color:#0a7aff;font-size:16px;background:none;border:0;padding:0;text-align:left}
 .btn.red{color:#ff3b30}
+.seg{display:flex;background:#e3e3e8;border-radius:8px;padding:2px;gap:2px;flex-shrink:0}.seg button{border:0;background:transparent;font:inherit;font-size:13px;padding:6px 9px;border-radius:6px;color:#000}.seg button.on{background:#fff;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .note{font-size:13px;color:#6d6d72;margin:6px 16px 0;line-height:1.4}
 .done{position:absolute;top:calc(var(--sat) + 14px);right:18px;font-size:17px;font-weight:600;color:#0a7aff;background:none;border:0;z-index:2}
 input[type=file]{display:none}
@@ -197,6 +198,7 @@ Quem recebe instala o app gratuito <b>ntfy</b>, toca em <b>+</b> e assina o mesm
     <div class="sec">
       <span class="sec-t">Código</span>
       <div class="box">
+        <div class="row">Ordem da entrada<div class="seg"><button type="button" id="bOrdSV">Naipe → Carta</button><button type="button" id="bOrdVS">Carta → Naipe</button></div></div>
         <div class="row">Tamanho do código<select id="sLen"><option value="4">4 dígitos</option><option value="6">6 dígitos</option></select></div>
         <div class="row">Carta discreta<select id="sHint"><option value=".35">Visível</option><option value=".25">Discreta</option><option value=".14">Bem fraca</option><option value="0">Desligada</option></select></div>
         <div class="row">Dígito 1<select class="sSuit" data-i="0"></select></div>
@@ -204,7 +206,7 @@ Quem recebe instala o app gratuito <b>ntfy</b>, toca em <b>+</b> e assina o mesm
         <div class="row">Dígito 3<select class="sSuit" data-i="2"></select></div>
         <div class="row">Dígito 4<select class="sSuit" data-i="3"></select></div>
       </div>
-      <div class="note">1º dígito = naipe. 2º e 3º = valor de 01 a 13 (01 Ás, 11 Valete, 12 Dama, 13 Rei). Os dígitos que sobram podem ser quaisquer números. Ex.: <b id="sEx"></b>. Enquanto digita, a carta e a resposta aparecem bem fraquinhas embaixo do teclado (ex.: K ♥ · 35) para conferir e apagar se precisar. Código inválido faz a tela tremer como senha errada.</div>
+      <div class="note"><span id="sOrdTxt"></span> Os dígitos que sobram podem ser quaisquer números. Ex.: <b id="sEx"></b>. Enquanto digita, a carta e a resposta aparecem bem fraquinhas embaixo do teclado (ex.: K ♥ · 35) para conferir e apagar se precisar. Código inválido faz a tela tremer como senha errada.</div>
     </div>
 
     <div class="sec">
@@ -291,7 +293,7 @@ const SUITS={C:{n:'Paus',red:false},H:{n:'Copas',red:true},S:{n:'Espadas',red:fa
 const RANKS={1:'Ás',11:'Valete',12:'Dama',13:'Rei'};
 const MN_DEF=[[4,'C'],[2,'H'],[7,'D'],[3,'C'],[4,'H'],[6,'D'],[1,'S'],[5,'H'],[9,'S'],[2,'S'],[12,'H'],[3,'D'],[12,'C'],[8,'H'],[6,'S'],[5,'S'],[9,'H'],[13,'C'],[2,'D'],[11,'H'],[3,'S'],[8,'S'],[6,'H'],[10,'C'],[5,'D'],[13,'D'],
  [2,'C'],[3,'H'],[8,'D'],[5,'C'],[13,'S'],[11,'D'],[8,'C'],[10,'S'],[13,'H'],[11,'C'],[7,'S'],[10,'H'],[1,'D'],[4,'S'],[7,'H'],[4,'D'],[1,'C'],[9,'C'],[11,'S'],[12,'D'],[7,'C'],[12,'S'],[10,'D'],[6,'C'],[1,'H'],[9,'D']];
-let cfg=Object.assign({ntfy:{on:0,topic:'',msg:''},qpos:null,ans:{on:1,color:'#ffffff',size:11,x:.5,y:.5,set:false},exit:null,opt:1,fmt:'word',acc:'keep',suits:['S','H','C','D'],len:4,hint:'.25',table:MN_DEF},store.get('cfg',{}));
+let cfg=Object.assign({ntfy:{on:0,topic:'',msg:''},qpos:null,ans:{on:1,color:'#ffffff',size:11,x:.5,y:.5,set:false},exit:null,opt:1,fmt:'word',acc:'keep',suits:['S','H','C','D'],len:4,hint:'.25',order:'sv',table:MN_DEF},store.get('cfg',{}));
 let wall=store.get('wall',null), homeShot=store.get('homeShot',null);
 function saveCfg(){store.set('cfg',cfg);}
 cfg.opt=1; /* sempre abre na opção 1 */
@@ -357,9 +359,12 @@ const SYM={C:'\u2663\uFE0E',H:'\u2665\uFE0E',S:'\u2660\uFE0E',D:'\u2666\uFE0E'};
 const LBL={1:'A',11:'J',12:'Q',13:'K'};
 function shortCard(r,su){return (LBL[r]||String(r))+' '+SYM[su];}
 function drawHint(){const h=$('#hint');h.style.color='rgba(255,255,255,'+cfg.hint+')';let t='';
-  if(code.length>=1){const s=+code[0];const su=(s>=1&&s<=4)?SYM[cfg.suits[s-1]]:'?';
-    let v='';if(code.length>=2){const n=+code.slice(1,3);v=code.length===2?(code[1]<='1'?'':'?'):(n>=1&&n<=13?(LBL[n]||String(n)):'?');}
-    t=(v?v+' ':'')+su;
+  if(code.length>=1){const vs=cfg.order==='vs';let su='',v='';
+    if(!vs){const s=+code[0];su=(s>=1&&s<=4)?SYM[cfg.suits[s-1]]:'?';
+      if(code.length>=2){const n=+code.slice(1,3);v=code.length===2?(code[1]<='1'?'':'?'):(n>=1&&n<=13?(LBL[n]||String(n)):'?');}}
+    else{if(code.length===1)v=code[0]<='1'?'':'?';else{const n=+code.slice(0,2);v=(n>=1&&n<=13)?(LBL[n]||String(n)):'?';}
+      if(code.length>=3){const s=+code[2];su=(s>=1&&s<=4)?SYM[cfg.suits[s-1]]:'?';}}
+    t=[v,su].filter(Boolean).join(' ');
     if(code.length>=3){const e=decode(code);if(e){const p=posOf(e.rank,e.suit);
       if(cfg.opt==2)t+='  ·  '+(p||'?');else if(cfg.opt==3){const nx=nextOf(e.rank,e.suit);t+='  ›  '+(nx?shortCard(nx[0],nx[1]):'?');}}}}
   h.textContent=t;}
@@ -368,7 +373,7 @@ function press(n){if(busy||code.length>=cfg.len)return;code+=n;drawDots();if(cod
 /* ---------- área de transferência (oculto) ---------- */
 const NOMES={1:'Ás',2:'Dois',3:'Três',4:'Quatro',5:'Cinco',6:'Seis',7:'Sete',8:'Oito',9:'Nove',10:'Dez',11:'Valete',12:'Dama',13:'Rei'};
 let pendingCopy=null;
-function decode(c){const s=+c[0],v=+c.slice(1,3);if(s>=1&&s<=4&&v>=1&&v<=13)return{rank:v,suit:cfg.suits[s-1]};return null;}
+function decode(c){const vs=cfg.order==='vs';const s=+(vs?c[2]:c[0]),v=+(vs?c.slice(0,2):c.slice(1,3));if(s>=1&&s<=4&&v>=1&&v<=13)return{rank:v,suit:cfg.suits[s-1]};return null;}
 function tableOK(){const t=cfg.table;return Array.isArray(t)&&t.length===52;}
 function posOf(r,su){if(!tableOK())return null;const i=cfg.table.findIndex(c=>c[0]===r&&c[1]===su);return i<0?null:i+1;}
 function nextOf(r,su){const p=posOf(r,su);if(!p)return null;return cfg.table[p%52];}
@@ -480,14 +485,18 @@ document.addEventListener('click',e=>{if(eatClick){e.stopPropagation();e.prevent
 
 /* ---------- settings ---------- */
 function openSettings(){fillSettings();show('settings');anim($('#settings'),[{transform:'translateY(100%)'},{transform:'translateY(0)'}],320);}
-function fillSettings(){$('#sVer').textContent='Versão 15 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
+function fillSettings(){$('#sVer').textContent='Versão 16 · tela '+screen.height+' · área '+innerHeight+(isStandalone?' · app':' · navegador');$('#sLen').value=String(cfg.len);$('#sHint').value=String(cfg.hint);
   cfg.ntfy=cfg.ntfy||{on:0,topic:''};if(cfg.ntfy.msg==null||cfg.ntfy.msg.trim()==='{carta}')cfg.ntfy.msg='';if(document.activeElement!==$('#sNtfyMsg'))$('#sNtfyMsg').value=cfg.ntfy.msg;$('#sNtfyOn').value=String(+cfg.ntfy.on);if(document.activeElement!==$('#sNtfyTopic'))$('#sNtfyTopic').value=cfg.ntfy.topic||'';
   $('#sOpt').value=String(cfg.opt);$('#sAnsOn').value=String(+cfg.ans.on);$('#sAnsColor').value=cfg.ans.color;$('#sAnsSize').value=String(cfg.ans.size);
   $('#ansPosSt').textContent=cfg.ans.set?'definido ✓':'centro da tela';$('#exitPosSt').textContent=cfg.exit?'definido ✓':'não definido';$('#qPosSt').textContent=cfg.qpos?'definido ✓':'lanterna (padrão)';$('#sFmt').value=cfg.fmt;$('#sAcc').value=cfg.acc;
   if(document.activeElement!==$('#sTable'))$('#sTable').value=(cfg.table||[]).map(c=>cardName2(c[0],c[1])).join('\n');tableState();
   $$('.sSuit').forEach(s=>{s.innerHTML=Object.keys(SUITS).map(k=>'<option value="'+k+'">'+SUITS[k].n+'</option>').join('');s.value=cfg.suits[+s.dataset.i];});
-  const i=cfg.suits.indexOf('H');$('#sEx').textContent=(i+1)+'13'+(cfg.len===6?'580':'7')+' = Rei de Copas';
+  const i=cfg.suits.indexOf('H'),vs=cfg.order==='vs';$('#bOrdSV').className=vs?'':'on';$('#bOrdVS').className=vs?'on':'';
+  $('#sOrdTxt').innerHTML=vs?'1º e 2º dígitos = valor de 01 a 13 (01 Ás, 11 Valete, 12 Dama, 13 Rei). 3º dígito = naipe.':'1º dígito = naipe. 2º e 3º = valor de 01 a 13 (01 Ás, 11 Valete, 12 Dama, 13 Rei).';
+  $('#sEx').textContent=(vs?'13'+(i+1):(i+1)+'13')+(cfg.len===6?'580':'7')+' = Rei de Copas';
 }
+$('#bOrdSV').onclick=()=>{cfg.order='sv';saveCfg();fillSettings();};
+$('#bOrdVS').onclick=()=>{cfg.order='vs';saveCfg();fillSettings();};
 $('#sLen').onchange=e=>{cfg.len=+e.target.value;saveCfg();fillSettings();};
 $('#sNtfyOn').onchange=e=>{cfg.ntfy.on=+e.target.value;
   if(cfg.ntfy.on&&!cfg.ntfy.topic){cfg.ntfy.topic='nipes-'+Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,6);$('#sNtfyTopic').value=cfg.ntfy.topic;}saveCfg();};
